@@ -127,7 +127,8 @@ In contrast to the other two layers, the protocol layer must be domain specific,
 as different scientific applications need different data to be communicated.
 
 As a proof of concept, communication between atomistic simulation packages could
-be implemented. One could start from the i-Pi protocol, as several packages are
+be implemented. One could start from the i-Pi protocol, as `several packages
+<https://wiki.fysik.dtu.dk/ase/ase/calculators/socketio/socketio.html>`_ are
 using it already, base it on the new message format and extend it with
 additional components.
 
