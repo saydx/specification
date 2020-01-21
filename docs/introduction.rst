@@ -4,18 +4,26 @@
 Introduction
 ************
 
-It would be desirable to develop a transport protocol and a supporting library
-to allow for data exchange between scientific software packages. The proof of
-concept should be demonstrated with atomistic simulation packages, but the
-protocol and the library should be general enough to satisfy the needs of other
-kind of scientific software packages as well.
+There is a clear need for a general and robust transport protocol to enable data
+exchange and communication between scientific software packages that need to
+interact. To suport this and demonstrate its use, a library implementation of
+the protocol should be developed and offered to the general scientific computing
+community. The proof of concept application for the library should be
+demonstrated for atomistic simulation packages, but the protocol and library
+need to be general enough to satisfy the needs of other kind of scientific
+software as well.
 
+There are a number of methods for communication between codes. However are
+either special purpose implementations or do not abstract this task for the
+developers of the communicating codes.
 
 Main goals
 ==========
 
-* The data exchange should be robust, eventually also supporting many-to-one and
-  many-to-many communication scenarios.
+* Data exchange should be robust, guaranteeing reliable transmission.
+
+* One-to-one and eventually many-to-one and many-to-many communication scenarios
+  should be supported.
 
 * Exchange of complex data (e.g. all the information needed to initialize and
   start a simulation) should be straightforward.
@@ -23,30 +31,32 @@ Main goals
 * The protocol should allow communication through different communcation
   channels.
 
+* Cross language support for Fortran, C/C++ and Python family langauages with
+  cross-platform numerical model support.
   
 Communication layers
 ====================
 
-In order to ensure flexibility, the data exchange protocol needs probably three
-implementation layers:
+In order to ensure flexibility, the data exchange protocol needs (probably) three
+layers of implementation:
 
 #. Transport layer: deals with the technicalities of the communication. It
-   should allow multiple transport channels, e.g. file I/O, socket communication
-   etc..
+   should allow multiple transport channels, e.g. file I/O, socket
+   communication, loadable code modules, etc. It should be extensible for future
+   channels and guarantee communication reliability.
 
 #. Message layer: Provides a flexible message format, which can be transmitted
    through the low-level layer betwen the applications.
 
 #. High-level communication layer: Domain specific protocol composed of
-   messages.
+   messages, as customised for the scientific codes' using the library.
 
-   
 
 Transport layer
 ---------------
 
-It would be good, if many different transport channels would be supported and
-they could be treated on the same foot. It would be desirable, if data could be
+It would be good if many different transport channels can be supported and
+they are treated on the same footing. It would be desirable, if data could be
 exchanged via
 
 * File I/O (text and binary)
@@ -68,42 +78,44 @@ write something similar.
 Message layer
 -------------
 
-One should use messages flexible enough to carry complex information. For
-scientific applications the exchange of array data seems to be enough, provided
-several arrays can be sent as one message.
+One should use messages that are flexible enough to carry complex
+information. For scientific applications the exchange of array data seems to be
+enough, provided several arrays can be sent as one message and different data
+types are supported within a message.
 
-Example: Driver (MM-program) sends data to the calculator (QM-program) to
-initialize it. This can be quite complex, as QM-programs usually require a lot
-of initialization parameters (Hamiltonian settings, basis set settings, various
-control settings, etc.). The message be flexible enough to allow for optional
-components, so that the driver has to specify only the required settings and
-those optional ones which it wishes to override.
+Example: Driver (a molecular-mechanics (MM)-program) sends data to a calculator
+(quantum-mechanical (QM)-program) to initialize it. This can be quite complex,
+as QM-programs usually require a lot of initialization parameters (Hamiltonian
+settings, basis set settings, various control settings, etc.). The message
+format needs to be flexible enough to allow for optional components, so that the
+driver has to specify only required settings and also optional ones which it
+wishes to override.
 
-This could be easily realized by using a data tree as a message. It could be
-like a simplified XML DOM-tree with following specification:
+This could be easily realized by using a data tree as a message. A possible
+structure could be like a simplified XML DOM-tree with following specification:
 
 * Each node of the tree is named (like in XML).
 
-* Each node of the tree can either contain further nodes (container node) or
-  data (data nodes), but never both. Consequently, the data nodes were the
-  leaves of the tree and had only container nodes as parents.
+* Each node of the tree can either contain further nodes (a container node) or
+  data (data nodes), but never both. Consequently, data nodes were the leaves of
+  the tree and have only container nodes as parents.
 
 * Each data node contains a single array of a given type and shape or a scalar
   as data. The data is in native binary format.
 
 * Optional: the nodes should contain attributes to store additional information
-  (e.g. unit of the data in the node, etc.). To make things simple, the
+  (e.g. the unit of the data in the node, etc.). To make things simple, the
   attributes should be text attributes, like in XML.
 
-The sender would assemble a tree with the necessary information and send it via
-the transport layer. The receiver would then query the transmitted tree, look
+The sender would assemble a tree with the necessary information and transmit it via
+the transport layer. The receiver would then query the received tree, look
 for the presence / absence of given nodes and extract the necessary information
 from the tree.
 
-I have already started a small C-library which this functionality, the `saydx
+I have already started a small C-library with this functionality, the `saydx
 library <https://github.com/saydx/saydx>`_. Although not finished yet, it could
-be used as the message layer. It would provide the basic infrastructure for the
-tree manipulation, as well as routines to read and write trees to file or pass
+be used as the message layer. It would provide the basic infrastructure for tree
+manipulation, as well as routines to read and write trees to file or to pass
 them from C to Fortran and vice-versa. Combined with cslib, it could cover the
 functionality of the first two layers.
 
@@ -111,19 +123,19 @@ functionality of the first two layers.
 Protocol layer
 --------------
 
-In contrast to the other two layers, the protocol layer must be domain specific
+In contrast to the other two layers, the protocol layer must be domain specific,
 as different scientific applications need different data to be communicated.
 
 As a proof of concept, communication between atomistic simulation packages could
-be implemented. One could start from the i-Pi protocol as several packages are
+be implemented. One could start from the i-Pi protocol, as several packages are
 using it already, base it on the new message format and extend it with
-additional components. 
+additional components.
 
 As an example, the transmitted data for passing the geometry between driver and
-client could look like scetched below. The XML-notation is used to indicate
-nodes and the ``@`` symbols indicate (binary) scalars or arrays of a given type
-and shape in the leaves (e.g., ``@s`` is scalar string, ``@r8(3,2)`` is a rank
-two array of 64 bit reals with shape (3, 2), etc.)::
+client could look like the structure sketched below. The XML-notation is used to
+indicate nodes and the ``@`` symbols indicate (binary) scalars or arrays of a
+given type and shape in the leaves (e.g., ``@s`` is scalar string, ``@r8(3,2)``
+is a rank two array of 64 bit reals with shape (3, 2), etc.)::
 
   <ipi-message>
     <command>
@@ -194,13 +206,13 @@ pseudo code::
     
 The lower lying layers warranty that the entire data tree (as sent by the
 sender) gets trasmitted before the receiver can start to read it. The receiver,
-therefore, can be sure, that it has all the data the sender wanted to send. It
-does not need to assume the shape / size of the transmitted data when receiving
-the message and hope for the best (as it is the case with the bare socket based
-i-Pi protocol). The arrays in the tree have type and shape information. The
-receiver can check whether they match its expectations and handle the error
-gracefully if not.
+therefore, can be sure that it has all the data the sender wanted
+communicating. It does not need to assume the shape / size of the transmitted
+data when receiving the message and hope for the best (as it is the case with
+the bare socket based i-Pi protocol). The arrays in the tree have type and shape
+information. The receiver can check whether they match its expectations and
+handle the error gracefully if not.
 
 Debugging communication problems (e.g. sender and receiver implement the
-protocol differently) should be also straightforward, as the saydx-library
+high-level protocol differently) should be also straightforward, as the saydx-library
 contains routines to write the trees from memory to disk.
