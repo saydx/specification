@@ -17,6 +17,7 @@ There are a number of methods for communication between codes. However are
 either special purpose implementations or do not abstract this task for the
 developers of the communicating codes.
 
+
 Main goals
 ==========
 
@@ -33,7 +34,8 @@ Main goals
 
 * Cross language support for Fortran, C/C++ and Python family langauages with
   cross-platform numerical model support.
-  
+
+
 Communication layers
 ====================
 
@@ -150,7 +152,6 @@ reordered in the message layer. In order to ensure, that normal indexing
 techniques (row-major in C and Python, column-major in Fortran) allow a
 continuous traversal in memory, the indexing tuple (but not the data!) should be
 reversed when the array shape is queried in a column-major language.
-  
 
 
 Protocol layer
