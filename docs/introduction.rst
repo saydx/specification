@@ -37,8 +37,8 @@ Main goals
 Communication layers
 ====================
 
-In order to ensure flexibility, the data exchange protocol needs (probably) three
-layers of implementation:
+In order to ensure flexibility, the data exchange protocol needs (probably)
+three layers of implementation:
 
 #. Transport layer: deals with the technicalities of the communication. It
    should allow multiple transport channels, e.g. file I/O, socket
@@ -107,17 +107,50 @@ structure could be like a simplified XML DOM-tree with following specification:
   (e.g. the unit of the data in the node, etc.). To make things simple, the
   attributes should be text attributes, like in XML.
 
-The sender would assemble a tree with the necessary information and transmit it via
-the transport layer. The receiver would then query the received tree, look
+The sender would assemble a tree with the necessary information and transmit it
+via the transport layer. The receiver would then query the received tree, look
 for the presence / absence of given nodes and extract the necessary information
 from the tree.
 
 I have already started a small C-library with this functionality, the `saydx
-library <https://github.com/saydx/saydx>`_. Although not finished yet, it could
-be used as the message layer. It would provide the basic infrastructure for tree
-manipulation, as well as routines to read and write trees to file or to pass
-them from C to Fortran and vice-versa. Combined with cslib, it could cover the
-functionality of the first two layers.
+[səeɪdɪks] library <https://github.com/saydx/libsaydx>`_. Although not finished
+yet, it could be used as the message layer. It would provide the basic
+infrastructure for tree manipulation, as well as routines to read and write
+trees to file or to pass them from C to Fortran and vice-versa. Combined with
+cslib, it could cover the functionality of the first two layers.
+
+
+Array types
+^^^^^^^^^^^
+
+The message layer should understand / support following array data types:
+
+* real numbers (4, 8 and eventually 16 bytes)
+* complex numbers (composed of two real numbers)
+* integers (4 and 8 bytes)
+* logicals (represented by integers)
+* characters (1 byte)
+* strings (of arbitrary length)
+* bytes
+
+When the data is represented in binary form, the native representation of the
+x86_64 architecture should be used. So, at least in its first version, the
+binary version of the protocol won't be architecture independent. We could allow
+for passing the arrays also in text form if this ever becomes an issue. (The
+saydx library can already store the tree in text form.) Implementing
+architecture independence on the binary level (as in HDF5) would be probably an
+overkill.
+
+
+Array indexing
+^^^^^^^^^^^^^^
+
+The arrays should be stored in the row-major format. The data should never be
+reordered in the message layer. In order to ensure, that normal indexing
+techniques (row-major in C and Python, column-major in Fortran) allow a
+continuous traversal in memory, the indexing tuple (but not the data!) should be
+reversed when the array shape is queried in a column-major language.
+  
 
 
 Protocol layer
@@ -135,22 +168,22 @@ additional components.
 As an example, the transmitted data for passing the geometry between driver and
 client could look like the structure sketched below. The XML-notation is used to
 indicate nodes and the ``@`` symbols indicate (binary) scalars or arrays of a
-given type and shape in the leaves (e.g., ``@s`` is scalar string, ``@r8(3,2)``
-is a rank two array of 64 bit reals with shape (3, 2), etc.)::
+given type and shape in the leaves (e.g., ``@s`` is scalar string, ``@r8(2,3)``
+is a rank two array of 64 bit reals with shape (2, 3), etc.)::
 
   <ipi-message>
     <command>
-      @s ::
+      @s
       POSDATA
     </command>
     <data>
       <atom_positions>
-        @r8(3, 2) ::
+        @r8(2,3)
         0.0   0.0   0.0
         0.0   0.0   1.0
      </atom_positions>
      <lattice_vectors>
-        @r8(3,3) ::
+        @r8(3,3)
         10.0  0.0  0.0
          0.0 10.0  0.0
          0.0  0.0 10.0
@@ -215,5 +248,5 @@ information. The receiver can check whether they match its expectations and
 handle the error gracefully if not.
 
 Debugging communication problems (e.g. sender and receiver implement the
-high-level protocol differently) should be also straightforward, as the saydx-library
-contains routines to write the trees from memory to disk.
+high-level protocol differently) should be also straightforward, as the
+saydx-library contains routines to write the trees from memory to disk.
