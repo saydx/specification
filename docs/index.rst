@@ -11,3 +11,4 @@ Saydx specifiation
    :maxdepth: 2
 
    introduction.rst
+   comparison.rst
