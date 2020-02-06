@@ -188,3 +188,21 @@ Differences:
   application (e.g. caller passes a tree to a library routine and receives
   another tree in response), but concentrates on sending it via sockets, file
   I/O or MPI-messaging.
+
+
+MxUI
+====
+
+The `MxUI <https://mxui.github.io/>`_ library wraps MPI calls for simplifying
+Multiple-Program Multiple-Data communication. The library provides a C++ header
+only implementation. It can also interpolate the transmitted data.
+
+Similarities:
+
+* Data can be arranged in structures, of arbitrary type
+
+Differences:
+
+* Templated push and fetch operations
+
+* Processing (interpolation) of data by transmission
